@@ -72,7 +72,9 @@ def connectedComponentsLabelling(mask, connectivity=1, k=1):
 def plotImage(image_array, PixelSize, origin):
     """
     plotImage(image_array, PixelSize, origin)
+    
     """
+    # extents is [left, right, top, bottom]
     extents = [origin[1], origin[1]+PixelSize[1]*(image_array.shape[1]-1), origin[0]+PixelSize[0]*(image_array.shape[0]-1), origin[0] ]
     plt.imshow(image_array, extent=extents, origin='upper')
     plt.gca().invert_yaxis()

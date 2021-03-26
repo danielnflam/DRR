@@ -27,3 +27,7 @@ def JaccardIndex(axial_auto, axial_validation):
     denom = (axial_auto.astype('bool') | axial_validation.astype('bool')).sum()
     num = (axial_auto.astype('bool') & axial_validation.astype('bool')).sum()
     return num/denom
+
+def MCCD(axial_auto, axial_validation):
+    
+    return
