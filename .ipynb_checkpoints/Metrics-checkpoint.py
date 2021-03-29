@@ -1,5 +1,6 @@
 import numpy as np
 import ImageProcessing
+import scipy as scp
 
 def DiceSimilarityCoefficient(axial_auto, axial_validation):
     """
@@ -28,6 +29,20 @@ def JaccardIndex(axial_auto, axial_validation):
     num = (axial_auto.astype('bool') & axial_validation.astype('bool')).sum()
     return num/denom
 
-def MCCD(axial_auto, axial_validation):
+def MCCD(axial_auto, axial_validation, extents_2D):
+    """
+    Calculate MCCD.
+    Extents_2D is [[minimum_i, maximum_i], [minimum_j, maximum_j]]
+    """
     
-    return
+    # Distance transform to get contour mask voxels
+    axial_auto = scp.ndimage.distance_transform_edt(axial_auto)
+    axial_validation = scp.ndimage.distance_transform_edt(axial_validation)
+    
+    # Mask to points
+    points_auto = ImageProcessing.mask2points(axial_auto, extents_2D)
+    points_val = ImageProcessing.mask2points(axial_validation, extents_2D)
+    
+    # Contour points compared to each other
+    
+    return points_auto

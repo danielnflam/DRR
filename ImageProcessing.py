@@ -85,20 +85,24 @@ def plotImage(image_array, PixelSize, origin):
 
 def BoneSegmentation(nda_nobed):
     """
+    Segment high-intensity structures (i.e. bone) from CT image.
     Input: 
     nda_nobed: 3D array of body, masked to remove non-body structures e.g. bed.
     """
     bone = nda_nobed.copy() > 250 # Adams et al. 2012. Chapter 12 - Radiology (Pediatric Bone Second Edition).
     
-    # Dilate
-    strel=skimage.morphology.ball(3)
-    bone = skimage.morphology.dilation(bone, selem=strel)
-    # Hole-fill
-    for i in range(bone.shape[0]):
-        bone[i,:,:] = scipy.ndimage.binary_fill_holes(bone[i,:,:])
     
-    # Erode
-    bone = skimage.morphology.erosion(bone, selem=strel)
+    strel=skimage.morphology.disk(3)
+        
+    for i in range(bone.shape[0]):
+        # Dilate
+        bone[i,:,:] = skimage.morphology.dilation(bone[i,:,:], selem=strel)
+        # Hole-fill
+        bone[i,:,:] = scipy.ndimage.binary_fill_holes(bone[i,:,:])
+        # Erode
+        bone[i,:,:] = skimage.morphology.erosion(bone[i,:,:], selem=strel)
+    
+    
     return bone
 
 def LungSegmentation(nda_nobed, mask):
@@ -122,5 +126,12 @@ def LungSegmentation(nda_nobed, mask):
         lung = (lung1 + lung2)>0
     else:
         lung = lung1 > 0
+    
+    strel=skimage.morphology.disk(2)
+    print(lung.shape)
+    for i in range(lung.shape[0]):
+        lung[i,:,:] = skimage.morphology.dilation(lung[i,:,:], selem=strel)
+        lung[i,:,:] = skimage.morphology.erosion(lung[i,:,:], selem=strel)
+    
     
     return lung
