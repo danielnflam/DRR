@@ -91,9 +91,9 @@ def BoneSegmentation(nda_nobed):
     """
     bone = nda_nobed.copy() > 250 # Adams et al. 2012. Chapter 12 - Radiology (Pediatric Bone Second Edition).
     
+    #bone, _, _ = connectedComponentsLabelling(bone, connectivity=1, k=1)
     
-    strel=skimage.morphology.disk(3)
-        
+    strel=skimage.morphology.disk(3)    
     for i in range(bone.shape[0]):
         # Dilate
         bone[i,:,:] = skimage.morphology.dilation(bone[i,:,:], selem=strel)
@@ -119,7 +119,15 @@ def LungSegmentation(nda_nobed, mask):
 
     lung = lung * mask  # remove non-lung air structures outside body.
     
-    # CC-labelling
+    lung_original_mask = lung.copy()
+    
+    # Erode low-HU structures to separate lung & bronchi
+    strel=skimage.morphology.disk(3)
+    
+    for i in range(lung.shape[0]):
+        lung[i,:,:] = skimage.morphology.erosion(lung[i,:,:], selem=strel)
+    
+    # CC-labelling -- find the lungs
     lung1, maxarea1, _ = connectedComponentsLabelling(lung, connectivity=1, k=1)
     lung2, maxarea2, _ = connectedComponentsLabelling(lung, connectivity=1, k=2)
     if maxarea2/maxarea1 > 0.5:
@@ -127,11 +135,11 @@ def LungSegmentation(nda_nobed, mask):
     else:
         lung = lung1 > 0
     
-    strel=skimage.morphology.disk(2)
-    print(lung.shape)
+    # Dilate to return to previous size & shape
     for i in range(lung.shape[0]):
         lung[i,:,:] = skimage.morphology.dilation(lung[i,:,:], selem=strel)
-        lung[i,:,:] = skimage.morphology.erosion(lung[i,:,:], selem=strel)
     
+    # Multiply with original mask to get the correct edges
+    lung = lung_original_mask * lung
     
     return lung
