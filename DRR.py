@@ -1,6 +1,6 @@
 import numpy as np
 
-def createDRR(array, k, VoxelSize, ImOrigin):
+def createDRR(array, k, VoxelSize, ImOrigin, window_width, window_level):
     """
     Campo's algorithm for generating DRR images
     https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6239425/
@@ -31,10 +31,20 @@ def createDRR(array, k, VoxelSize, ImOrigin):
         origin = [ImOrigin[1], ImOrigin[2]]
     else:
         raise RuntimeError('k can be 0, 1, 2')
-    out = DRR_algorithm_Campo(array, beta=0.85)
-    return out, PixelSize, origin
+        
+    # Algorithm
+    beta = 0.85
+    out, limits = DRR_algorithm_Campo(array, beta, window_width, window_level)
+    
+    # Set limits so that max(out) is max(limits) and min(out) is min(limits)
+    print(str(np.amax(out)) + "," + str(np.amin(out)))
+    out = np.minimum(out, max(limits))
+    print(str(np.amax(out)) + "," + str(np.amin(out)))
+    out = np.maximum(out, min(limits))
+    print(str(np.amax(out)) + "," + str(np.amin(out)))
+    return out, limits, PixelSize, origin
 
-def DRR_algorithm_Campo(array, beta):
+def DRR_algorithm_Campo(array, beta, window_width, window_level):
     """
     Campo's algorithm for generating DRR images
     https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6239425/
@@ -42,6 +52,8 @@ def DRR_algorithm_Campo(array, beta):
     Input: 
     array: [CxHxW] where C is planes (IS), H is rows (RL), W is columns (AP).
     beta: 0.85 in https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6239425/
+    window_width: the range of HU values that will be shown.
+    window_level: the mid-point of the window_width.
     
     Output:
     out: [HxW] with values increasing from 0
@@ -49,4 +61,10 @@ def DRR_algorithm_Campo(array, beta):
     
     a = (np.maximum(array,-1024) + 1024)/1000
     out = (1/array.shape[0])*np.sum((np.exp(beta*a)-1), axis=0)
-    return out
+    
+    window_limits = np.array([window_level - 0.5*window_width, window_level + 0.5*window_width])
+    
+    b = (np.maximum(window_limits,-1024) + 1024)/1000
+    
+    limits = (np.exp(beta*b)-1)
+    return out, limits

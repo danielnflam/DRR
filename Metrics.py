@@ -44,5 +44,18 @@ def MCCD(axial_auto, axial_validation, extents_2D):
     points_val = ImageProcessing.mask2points(axial_validation, extents_2D)
     
     # Contour points compared to each other
+    d12 = []
+    d21 = []
+    for point in range(points_auto.shape[0]):
+        a_point = points_auto[point]
+        dist = np.linalg.norm(a_point - points_val , axis=1)
+        d12.append(min(dist))
+        
+        
+    for point in range(points_val.shape[0]):
+        a_point = points_val[point]
+        dist = np.linalg.norm(a_point - points_auto , axis=1)
+        d21.append(min(dist))
     
-    return points_auto
+    d = (1/points_auto.shape[0])*np.sum(d12) + (1/points_val.shape[0])*np.sum(d21)
+    return d
