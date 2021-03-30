@@ -59,3 +59,6 @@ def MCCD(axial_auto, axial_validation, extents_2D):
     
     d = (1/points_auto.shape[0])*np.sum(d12) + (1/points_val.shape[0])*np.sum(d21)
     return d
+
+def SSIM(reference, testImage):
+    return 0

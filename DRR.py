@@ -33,18 +33,18 @@ def createDRR(array, k, VoxelSize, ImOrigin, window_width, window_level):
         raise RuntimeError('k can be 0, 1, 2')
         
     # Algorithm
-    beta = 0.85
-    out, limits = DRR_algorithm_Campo(array, beta, window_width, window_level)
-    
     # Set limits so that max(out) is max(limits) and min(out) is min(limits)
-    print(str(np.amax(out)) + "," + str(np.amin(out)))
-    out = np.minimum(out, max(limits))
-    print(str(np.amax(out)) + "," + str(np.amin(out)))
-    out = np.maximum(out, min(limits))
-    print(str(np.amax(out)) + "," + str(np.amin(out)))
-    return out, limits, PixelSize, origin
+    window_limits = np.array([window_level - 0.5*window_width, window_level + 0.5*window_width])
+    array = np.minimum(array, max(window_limits))
+    array = np.maximum(array, min(window_limits))
+    
+    out = DRR_algorithm_Campo(array, beta=0.85)
+    
+    
+        
+    return out, PixelSize, origin
 
-def DRR_algorithm_Campo(array, beta, window_width, window_level):
+def DRR_algorithm_Campo(array, beta=0.85):
     """
     Campo's algorithm for generating DRR images
     https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6239425/
@@ -62,9 +62,4 @@ def DRR_algorithm_Campo(array, beta, window_width, window_level):
     a = (np.maximum(array,-1024) + 1024)/1000
     out = (1/array.shape[0])*np.sum((np.exp(beta*a)-1), axis=0)
     
-    window_limits = np.array([window_level - 0.5*window_width, window_level + 0.5*window_width])
-    
-    b = (np.maximum(window_limits,-1024) + 1024)/1000
-    
-    limits = (np.exp(beta*b)-1)
-    return out, limits
+    return out
