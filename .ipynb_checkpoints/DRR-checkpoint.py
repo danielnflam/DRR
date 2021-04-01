@@ -8,7 +8,7 @@ def createDRR(array, k, VoxelSize, ImOrigin, window_width, window_level):
     Output:
     out: 2D array
     PixelSize: 2D array pixel size.  For k=0, PixelSize is [HxW]; for k=1, PixelSize is [CxW]; for k=2, PixelSize is [HxC].
-    origin: uppermost and leftmost corner of the array
+    origin: uppermost and leftmost corner of the array.
     
     Input: 
     array: [CxHxW] where C is planes (IS), H is rows (RL), W is columns (AP).
