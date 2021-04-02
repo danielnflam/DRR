@@ -62,7 +62,12 @@ def MCCD(axial_auto, axial_validation, extents_2D):
 
 def SSIM(referenceImage, testImage, filter_kernel=(101,101), stride = None, dynamic_range = 1):
     """
+    Structural similarity index measure.
+    Only luminance and contrast components are included here.
     
+    Paper:
+    Wang, Z., Bovik, A. C., Sheikh, H. R., & Simoncelli, E. P. (2004). Image quality assessment: from error visibility to structural similarity. 
+    IEEE Transactions on Image Processing, 13(4), 600–612. https://doi.org/10.1109/TIP.2003.819861
     """
     # From SSIM paper
     k1 = 0.01
@@ -83,7 +88,7 @@ def SSIM(referenceImage, testImage, filter_kernel=(101,101), stride = None, dyna
             
             SSIM_list.append(luminance*contrast)
             
-    SSIM = np.mean(SSIM_list)
+    SSIM = np.abs(np.mean(SSIM_list))
     return SSIM
 
 def patchMetrics(image, filter_kernel=(101,101), stride = None):
