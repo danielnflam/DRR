@@ -2,6 +2,24 @@ import skimage.measure, skimage.morphology
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy
+import cv2
+
+def flood_fill(test_array,h_max=255):
+    """
+    source: https://stackoverflow.com/questions/36294025/python-equivalent-to-matlab-funciton-imfill-for-grayscale
+    """
+    input_array = np.copy(test_array) 
+    el = scipy.ndimage.generate_binary_structure(2,2).astype(np.int)
+    inside_mask = scipy.ndimage.binary_erosion(~np.isnan(input_array), structure=el)
+    output_array = np.copy(input_array)
+    output_array[inside_mask]=h_max
+    output_old_array = np.copy(input_array)
+    output_old_array.fill(0)   
+    el = scipy.ndimage.generate_binary_structure(2,1).astype(np.int)
+    while not np.array_equal(output_old_array, output_array):
+        output_old_array = np.copy(output_array)
+        output_array = np.maximum(input_array,scipy.ndimage.grey_erosion(output_array, size=(3,3), footprint=el))
+    return output_array
 
 def mask2points(array, extents):
     """
@@ -36,7 +54,20 @@ def mask2points(array, extents):
         world_coords = np.concatenate((world_i, world_j, world_k), axis=1)
         
     return world_coords
+
+def imageComplement(image):
+    image = image.astype(np.float)
+    max_image = np.amax(image)
+    min_image = np.amin(image)
     
+    if max_image == min_image:
+        print("No difference between max and min intensity.")
+        return image
+    
+    scaled_image = (image - min_image)/(max_image - min_image)
+    scaled_complement = 1. - scaled_image
+    complement = scaled_complement*(max_image-min_image) + min_image
+    return complement
 
 def connectedComponentsLabelling(mask, connectivity=1, k=1):
     """
@@ -122,24 +153,46 @@ def LungSegmentation(nda_nobed, mask):
     lung_original_mask = lung.copy()
     
     # Erode low-HU structures to separate lung & bronchi
-    strel=skimage.morphology.disk(3)
     
+    """strel=skimage.morphology.disk(3)
     for i in range(lung.shape[0]):
-        lung[i,:,:] = skimage.morphology.erosion(lung[i,:,:], selem=strel)
-    
+        lung[i,:,:] = skimage.morphology.erosion(lung[i,:,:], selem=strel)"""
+    lung = skimage.morphology.erosion(lung, selem=skimage.morphology.ball(1))
     # CC-labelling -- find the lungs
     lung1, maxarea1, _ = connectedComponentsLabelling(lung, connectivity=1, k=1)
     lung2, maxarea2, _ = connectedComponentsLabelling(lung, connectivity=1, k=2)
-    if maxarea2/maxarea1 > 0.5:
+    if maxarea2/maxarea1 > 0.25:
         lung = (lung1 + lung2)>0
     else:
         lung = lung1 > 0
     
     # Dilate to return to previous size & shape
-    for i in range(lung.shape[0]):
-        lung[i,:,:] = skimage.morphology.dilation(lung[i,:,:], selem=strel)
+    lung = skimage.morphology.dilation(lung, selem=skimage.morphology.ball(1))
+    """for i in range(lung.shape[0]):
+        lung[i,:,:] = skimage.morphology.dilation(lung[i,:,:], selem=strel)"""
     
     # Multiply with original mask to get the correct edges
     lung = lung_original_mask * lung
     
     return lung
+
+def LungMaskSegmentation_Gozes2018(nda_nobed , body_mask ):
+    """
+    Extract a 2D lung mask from a 3D CT image.
+    Paper: 
+    
+    
+    Inputs:
+        nda_nobed: [IS x AP x LR] CT of patients
+        body_mask: [IS x AP x LR] body mask of patients
+    """
+    nda_nobed_masked = (nda_nobed < -500) * body_mask # exclude extracorporeal air
+    lung_segment = nda_nobed_masked.copy()
+    
+    lung_segment , _, _ = connectedComponentsLabelling(lung_segment,1,1)
+    
+    # Create the 2D mask
+    lung_segment_2D = np.sum(lung_segment, axis=1) > 0
+    
+    return lung_segment_2D
+    
